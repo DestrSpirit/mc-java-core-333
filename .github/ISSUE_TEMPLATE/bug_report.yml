@@ -1,71 +1,58 @@
-name: Signaler un bug
-description: Vous avez rencontré un bug? Signalez-le ici
+name: Report a bug
+description: Encountered a bug? Report it here
 title: "[Bug] "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
      value: |
-      Un grand merci d'avance pour votre aide. Néanmoins, nous avons besoin d'un certain nombre d'informations, pour nous aider.
-  - type: checkboxes
-    attributes:
-      label: "Liste des vérifications à faire avant de valider l'ouverture du signalement de bug"
-      description: Assurez que vous avez complété ce qui suit, dans le cas contraire, votre rapport peut être refusé
-      options:
-        - label: J'ai réussi à reproduire le bug sur le Selvania Launcher (sans mes modifications)
-          required: true
-        - label: Mon code respecte la licence Creative Commons Zero v1.0 Universal
-          required: true
-        - label: Mon code respecte les conditions d'utilisation du Selvania Launcher
-          required: true
-        - label: J'arrive à reproduire le bug sur la dernière version du Selvania Launcher
-          required: true
+      Many thanks in advance for your help. Nevertheless, we need some information to help us.
   - type: dropdown
     attributes:
-      label: Système d'exploitation
+      label: Operating system
       options:
         - Windows
         - macOS
-        - Linux (Basé sur Debian/Ubuntu)
+        - Linux (Debian/Ubuntu-based)
         - Linux (Autres)
     validations:
       required: true
   - type: input
     attributes:
-      label: Version du système d'exploitation
-      placeholder: "Exemple: Windows 11 Professionnel 21H2 Build 22000.739"
+      label: Operating system version
+      placeholder: “Example: Windows 11 Professional 21H2 Build 22000.739”
     validations:
         required: true
   - type: input
     attributes:
-      label: Hash du commit sur lequel le bug est rencontré
-      placeholder: 84d7881b67ecf6088205eca6723bfb19bf2a5f0d
+      label: Hash of the commit on which the bug is encountered
+      placeholder: 961108713a19d26c3325d16bcfa7afdbbea6ec2c
   - type: textarea
     attributes:
-      label: Comportement attendu
-      description: Une description de ce qui devrait se passer
-      placeholder: Le launcher devrait...
+      label: Expected behavior
+      description: A description of what should happen
+      placeholder: The launcher should...
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Comportement actuel
-      description: Une description de ce qui se passe avec le bug
+      label: Current behavior
+      description: A description of what happens with the bug
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Instructions pour reproduire le but
+      label: Instructions for reproducing the goal
       placeholder: |
-        1. Ouvrir le launcher
-        2. Aller dans le menu xyz
-        3. Cliquer sur abc
-        4. Observer
+        1. Open launcher
+        2. Go to xyz menu
+        3. Click on abc
+        4. Watch
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Notes additionnelles
-      placeholder: Détails supplémentaires concernant le bug, tout ce qui pourrait être utile
+      label: Additional notes
+      placeholder: Additional details about the bug, anything that might be useful
     validations:
       required: false

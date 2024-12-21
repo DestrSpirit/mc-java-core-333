@@ -1,49 +1,31 @@
-# minecraft-java-core
-NodeJS Module for Minecraft launcher
-<br>
-[![Number](https://img.shields.io/npm/v/minecraft-java-core?style=social&logo=appveyor)](https://npmjs.com/minecraft-java-core)
-[![Install](https://img.shields.io/npm/dm/minecraft-java-core.svg?style=social&logo=appveyor)](https://npmjs.com/minecraft-java-core)
-[![size](https://img.shields.io/github/languages/code-size/luuxis/minecraft-java-core?style=social&logo=appveyor)](https://npmjs.com/minecraft-java-core)
-[![sizeinstall](https://badgen.net/packagephobia/install/minecraft-java-core)](https://npmjs.com/minecraft-java-core)
-
-<p align="center">
-    <a href="http://discord.luuxis.fr">
-        <img src="https://invidget.switchblade.xyz/e9q7Yr2cuQ">
-    </a>
-</p>
+# mc-java-core-333
+An autistic fork because I didn't liked the og code.
+(For now, just redoing the Microsoft module, maybe I will redo the whole code later).
 
 ---
 ## Avantages :dizzy:
-- Auto check & downloading compatible java version
-- Support 100% custom minecraft version
-- Work with ftp without any zip file, juste drop folder in your ftp
-- Auto check & delete file with bad hash & size
+- I know the existence of switch statement
+
+### From here on it is the same as in the original README.md lol
+<br>
 
 # Install Client
 
-## Quick Start :zap:
-```npm
-git clone https://github.com/luuxis/Selvania-Launcher.git
-cd Selvania-Launcher
-npm install
-npm start
-```
-
 ## Installation :package:
 ```npm
-npm i minecraft-java-core
+npm i mc-java-core-333
 ```
 
 ## Usage :triangular_flag_on_post:
 Require library
 ```javascript
-const { Launch, Mojang } = require('minecraft-java-core');
+const { Launch, Mojang } = require('mc-java-core-333');
 ```
 
 ## Launch :rocket:
 ### Options
 ```javascript
-const { Mojang, Launch } = require('minecraft-java-core');
+const { Mojang, Launch } = require('mc-java-core-333');
 const launch = new Launch();
 
 async function main() {

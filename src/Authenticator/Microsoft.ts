@@ -1,6 +1,6 @@
+"use strict";
 /**
- * @author Luuxis
- * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0/
+ * @author Benjas333
  */
 
 import nodeFetch from 'node-fetch';
@@ -12,12 +12,11 @@ export default class Microsoft {
     type: 'electron' | 'nwjs' | 'terminal';
 
     constructor(client_id: string) {
-        if (client_id === '' || !client_id) client_id = '00000000402b5328';
-        this.client_id = client_id;
+        this.client_id = client_id || '00000000402b5328';
 
-        if (!!process && !!process.versions && !!process.versions.electron) {
+        if (!!process?.versions?.electron) {
             this.type = 'electron';
-        } else if (!!process && !!process.versions && !!process.versions.nw) {
+        } else if (!!process?.versions?.nw) {
             this.type = 'nwjs';
         } else {
             this.type = 'terminal';
@@ -25,22 +24,24 @@ export default class Microsoft {
     }
 
     async getAuth(type: string, url: string) {
-        if (!url) url = `https://login.live.com/oauth20_authorize.srf?client_id=${this.client_id}&response_type=code&redirect_uri=https://login.live.com/oauth20_desktop.srf&scope=XboxLive.signin%20offline_access&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&prompt=select_account`;
-        if (!type) type = this.type;
+        url = url || `https://login.live.com/oauth20_authorize.srf?client_id=${this.client_id}&response_type=code&redirect_uri=https://login.live.com/oauth20_desktop.srf&scope=XboxLive.signin%20offline_access&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&prompt=select_account`;
+        type = type || this.type;
 
-        if (type == "electron") {
-            let usercode = await (require('./GUI/Electron.js'))(url)
-            if (usercode === "cancel") return false;
-            else return await this.url(usercode);
-        } else if (type == "nwjs") {
-            let usercode = await (require('./GUI/NW.js'))(url)
-            if (usercode === "cancel") return false;
-            else return await this.url(usercode);
-        } else if (type == "terminal") {
-            let usercode = await (require('./GUI/Terminal.js'))(url)
-            if (usercode === "cancel") return false;
-            else return await this.url(usercode);
+        let usercode;
+        switch (type) {
+            case "electron":
+                usercode = await (require('./GUI/Electron.js'))(url)
+                break;
+            case "nwjs":
+                usercode = await (require('./GUI/NW.js'))(url)
+                break;
+            case "terminal":
+                usercode = await (require('./GUI/Terminal.js'))(url)
+                break;
+            default:
+                break;
         }
+        return !usercode || usercode === "cancel" ? false : await this.url(usercode);
     }
 
     async url(code: string) {
@@ -50,8 +51,12 @@ export default class Microsoft {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: `client_id=${this.client_id}&code=${code}&grant_type=authorization_code&redirect_uri=https://login.live.com/oauth20_desktop.srf`
-        }).then(res => res.json()).catch(err => { return { error: err } });;
-        if (oauth2.error) return oauth2;
+        }).then(res => res.json()).catch(err => { return { error: err } });
+        if (oauth2.error) {
+            oauth2.errorType = "oauth2";
+            return oauth2;
+        }
+
         return await this.getAccount(oauth2)
     }
 
@@ -64,25 +69,26 @@ export default class Microsoft {
                 skins: profile.skins,
                 capes: profile.capes
             }
-            return acc
-        } else {
-            let oauth2 = await nodeFetch("https://login.live.com/oauth20_token.srf", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `grant_type=refresh_token&client_id=${this.client_id}&refresh_token=${acc.refresh_token}`
-            }).then(res => res.json()).catch(err => { return { error: err } });;
-            if (oauth2.error) {
-                oauth2.errorType = "oauth2";
-                return oauth2
-            };
-            return await this.getAccount(oauth2)
+            return acc;
         }
+
+        let oauth2 = await nodeFetch("https://login.live.com/oauth20_token.srf", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `grant_type=refresh_token&client_id=${this.client_id}&refresh_token=${acc.refresh_token}`
+        }).then(res => res.json()).catch(err => { return { error: err } });
+        if (oauth2.error) {
+            oauth2.errorType = "oauth2 refresh";
+            return oauth2;
+        }
+
+        return await this.getAccount(oauth2);
     }
 
     async getAccount(oauth2: any) {
-        let xbl = await nodeFetch("https://user.auth.xboxlive.com/user/authenticate", {
+        let xboxLive = await nodeFetch("https://user.auth.xboxlive.com/user/authenticate", {
             method: "post",
             body: JSON.stringify({
                 Properties: {
@@ -94,10 +100,10 @@ export default class Microsoft {
                 TokenType: "JWT"
             }),
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-        }).then(res => res.json()).catch(err => { return { error: err } });;
-        if (xbl.error) {
-            xbl.errorType = "xbl";
-            return xbl
+        }).then(res => res.json()).catch(err => { return { error: err } });
+        if (xboxLive.error) {
+            xboxLive.errorType = "Xbox Live Authentication";
+            return xboxLive;
         }
 
         let xsts = await nodeFetch("https://xsts.auth.xboxlive.com/xsts/authorize", {
@@ -108,46 +114,15 @@ export default class Microsoft {
             body: JSON.stringify({
                 Properties: {
                     SandboxId: "RETAIL",
-                    UserTokens: [xbl.Token]
+                    UserTokens: [xboxLive.Token]
                 },
                 RelyingParty: "rp://api.minecraftservices.com/",
                 TokenType: "JWT"
             })
         }).then(res => res.json());
         if (xsts.error) {
-            xsts.errorType = "xsts";
-            return xsts
-        }
-
-        let xboxAccount = await nodeFetch("https://xsts.auth.xboxlive.com/xsts/authorize", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                Properties: {
-                    SandboxId: "RETAIL",
-                    UserTokens: [xbl.Token]
-                },
-                RelyingParty: "http://xboxlive.com",
-                TokenType: "JWT"
-            })
-        }).then(res => res.json()).catch(err => { return { error: err } });
-        if (xsts.error) {
-            xsts.errorType = "xboxAccount";
-            return xsts
-        }
-
-        let launch = await nodeFetch("https://api.minecraftservices.com/launcher/login", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ xtoken: `XBL3.0 x=${xbl.DisplayClaims.xui[0].uhs};${xsts.Token}`, platform: "PC_LAUNCHER" })
-        }).then(res => res.json()).catch(err => { return { error: err } });
-        if (launch.error) {
-            launch.errorType = "launch";
-            return launch
+            xsts.errorType = "xsts - Minecraft API";
+            return xsts;
         }
 
         let mcLogin = await nodeFetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
@@ -155,11 +130,11 @@ export default class Microsoft {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ "identityToken": `XBL3.0 x=${xbl.DisplayClaims.xui[0].uhs};${xsts.Token}` })
+            body: JSON.stringify({ "identityToken": `XBL3.0 x=${xboxLive.DisplayClaims.xui[0].uhs};${xsts.Token}` })
         }).then(res => res.json()).catch(err => { return { error: err } });
         if (mcLogin.error) {
-            mcLogin.errorType = "mcLogin";
-            return mcLogin
+            mcLogin.errorType = "Minecraft Login";
+            return mcLogin;
         }
 
         let hasGame = await nodeFetch("https://api.minecraftservices.com/entitlements/mcstore", {
@@ -168,18 +143,17 @@ export default class Microsoft {
                 'Authorization': `Bearer ${mcLogin.access_token}`
             }
         }).then(res => res.json());
-
         if (!hasGame.items.find(i => i.name == "product_minecraft" || i.name == "game_minecraft")) {
             return {
                 error: "You don't own the game",
                 errorType: "game"
-            }
+            };
         }
 
         let profile = await this.getProfile(mcLogin);
         if (profile.error) {
             profile.errorType = "profile";
-            return profile
+            return profile;
         }
 
         return {
@@ -193,11 +167,6 @@ export default class Microsoft {
                 type: "Xbox",
                 access_token_expires_in: mcLogin.expires_in + Math.floor(Date.now() / 1000),
                 demo: profile.error ? true : false
-            },
-            xboxAccount: {
-                xuid: xboxAccount.DisplayClaims.xui[0].xid,
-                gamertag: xboxAccount.DisplayClaims.xui[0].gtg,
-                ageGroup: xboxAccount.DisplayClaims.xui[0].agg
             },
             profile: {
                 skins: profile.skins,
