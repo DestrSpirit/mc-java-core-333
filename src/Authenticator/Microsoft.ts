@@ -23,20 +23,20 @@ export default class Microsoft {
         }
     }
 
-    async getAuth(type: string, url: string) {
+    async getAuth(type: string, url: string, doRemoveCookies: boolean = true) {
         url = url || `https://login.live.com/oauth20_authorize.srf?client_id=${this.client_id}&response_type=code&redirect_uri=https://login.live.com/oauth20_desktop.srf&scope=XboxLive.signin%20offline_access&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&prompt=select_account`;
         type = type || this.type;
 
         let usercode;
         switch (type) {
             case "electron":
-                usercode = await (require('./GUI/Electron.js'))(url)
+                usercode = await (require('./GUI/Electron.js'))(url, doRemoveCookies);
                 break;
             case "nwjs":
-                usercode = await (require('./GUI/NW.js'))(url)
+                usercode = await (require('./GUI/NW.js'))(url, doRemoveCookies);
                 break;
             case "terminal":
-                usercode = await (require('./GUI/Terminal.js'))(url)
+                usercode = await (require('./GUI/Terminal.js'))(url);
                 break;
             default:
                 break;
