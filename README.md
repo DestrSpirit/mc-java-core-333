@@ -5,6 +5,10 @@ An autistic fork because I didn't liked the og code.
 ---
 ## Avantages :dizzy:
 - I know the existence of switch statement
+- Removed unnecessary logic in some classes
+
+### Improved classes until now:
+- Authenticator/Microsoft.js
 
 ### From here on it is the same as in the original README.md lol
 <br>
