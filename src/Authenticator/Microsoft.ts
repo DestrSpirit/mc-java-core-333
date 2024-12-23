@@ -52,10 +52,10 @@ export default class Microsoft {
             },
             body: `client_id=${this.client_id}&code=${code}&grant_type=authorization_code&redirect_uri=https://login.live.com/oauth20_desktop.srf`
         }).then(res => res.json()).catch(err => { return { error: err } });
-        if (oauth2.error) {
-            oauth2.errorType = "oauth2";
-            return oauth2;
-        }
+        if (oauth2.error) return {
+            ...oauth2,
+            errorType: "oauth2"
+        };
 
         return await this.getAccount(oauth2)
     }
@@ -79,10 +79,10 @@ export default class Microsoft {
             },
             body: `grant_type=refresh_token&client_id=${this.client_id}&refresh_token=${acc.refresh_token}`
         }).then(res => res.json()).catch(err => { return { error: err } });
-        if (oauth2.error) {
-            oauth2.errorType = "oauth2 refresh";
-            return oauth2;
-        }
+        if (oauth2.error) return {
+            ...oauth2,
+            errorType: "oauth2 refresh"
+        };
 
         return await this.getAccount(oauth2);
     }
@@ -101,10 +101,10 @@ export default class Microsoft {
             }),
             headers: { "Content-Type": "application/json", Accept: "application/json" },
         }).then(res => res.json()).catch(err => { return { error: err } });
-        if (xboxLive.error) {
-            xboxLive.errorType = "Xbox Live Authentication";
-            return xboxLive;
-        }
+        if (xboxLive.error) return {
+            ...xboxLive,
+            errorType: "Xbox Live Authentication"
+        };
 
         let xsts = await nodeFetch("https://xsts.auth.xboxlive.com/xsts/authorize", {
             method: "POST",
@@ -120,10 +120,10 @@ export default class Microsoft {
                 TokenType: "JWT"
             })
         }).then(res => res.json());
-        if (xsts.error) {
-            xsts.errorType = "xsts - Minecraft API";
-            return xsts;
-        }
+        if (xsts.error) return {
+            ...xsts,
+            errorType: "xsts - Minecraft API"
+        };
 
         let mcLogin = await nodeFetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
             method: "POST",
@@ -132,10 +132,10 @@ export default class Microsoft {
             },
             body: JSON.stringify({ "identityToken": `XBL3.0 x=${xboxLive.DisplayClaims.xui[0].uhs};${xsts.Token}` })
         }).then(res => res.json()).catch(err => { return { error: err } });
-        if (mcLogin.error) {
-            mcLogin.errorType = "Minecraft Login";
-            return mcLogin;
-        }
+        if (mcLogin.error) return {
+            ...mcLogin,
+            errorType: "Minecraft Login"
+        };
 
         let hasGame = await nodeFetch("https://api.minecraftservices.com/entitlements/mcstore", {
             method: "GET",
@@ -151,10 +151,10 @@ export default class Microsoft {
         }
 
         let profile = await this.getProfile(mcLogin);
-        if (profile.error) {
-            profile.errorType = "profile";
-            return profile;
-        }
+        if (profile.error) return {
+            ...profile,
+            errorType: "profile"
+        };
 
         return {
             access_token: mcLogin.access_token,
@@ -166,7 +166,7 @@ export default class Microsoft {
             meta: {
                 type: "Xbox",
                 access_token_expires_in: mcLogin.expires_in + Math.floor(Date.now() / 1000),
-                demo: profile.error ? true : false
+                demo: false
             },
             profile: {
                 skins: profile.skins,

@@ -48,12 +48,12 @@
     "typescript": "^4.9.5"
   },
   "bugs": {
-    "url": "https://github.com/luuxis/mc-java-core-333/issues"
+    "url": "https://github.com/Benjas333/mc-java-core-333/issues"
   },
-  "homepage": "https://github.com/luuxis/mc-java-core-333#readme",
+  "homepage": "https://github.com/Benjas333/mc-java-core-333#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luuxis/mc-java-core-333.git"
+    "url": "git+https://github.com/Benjas333/mc-java-core-333.git"
   },
   "optionalDependencies": {
     "electron": "^33.2.1"
