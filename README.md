@@ -28,7 +28,7 @@ An autistic fork because I didn't liked the og code.
         1. Improved if conditionals with just an object.
     - forge()
         1. General improvements.
-- [download](src\utils\Downloader.ts)
+- [download](src/utils/Downloader.ts)
     - checkMirror()
         1. Minor changes.
         2. Added check if response.size is an actual number.
