@@ -1,6 +1,6 @@
 {
     "name": "mc-java-core-333",
-    "version": "1.4.3",
+    "version": "1.5.0",
     "types": "./build/Index.d.ts",
     "exports": {
         ".": {
