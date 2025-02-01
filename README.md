@@ -23,6 +23,11 @@ An autistic fork because I didn't liked the og code.
         1. Removed unnecessary logic.
         2. Added better check event emitter feedback.
         3. Priority is given to downloading from the official links first, if provided, and then from the mirrors (instead of the other way around).
+        4. Fixed not reaching on error event.
+        5. Redownloading for corrupted/incomplete libraries.
+    - patchForge()
+        1. General improvements.
+        2. Fixed not reaching on error event.
 - [Loader](src/Minecraft-Loader/index.ts)
     - install()
         1. Improved if conditionals with just an object.
@@ -32,6 +37,23 @@ An autistic fork because I didn't liked the og code.
     - checkMirror()
         1. Minor changes.
         2. Added check if response.size is an actual number.
+- [forgePatcher](src/Minecraft-Loader/patcher.ts)
+    - patcher()
+        1. General improvements.
+        2. Fixed not emitting error event when failing to read jar manifest.
+    - check()
+        1. Minor changes.
+    - setArgument()
+        1. Minor changes.
+    - computePath()
+        1. Minor changes.
+    - readJarManifest()
+        1. Minor changes.
+- [src\utils\Index.ts](src/utils/Index.ts)
+    - getFileFromArchive()
+        1. Improved info in case of error.
+    - skipLibrary()
+        1. Minor changes
 
 ### From here on it is the same as in the original README.md lol
 <br>
