@@ -220,8 +220,9 @@ export default class ForgeMC extends EventEmitter {
             } catch (error) {
                 
             }
-
+            
             if (!url) return { error: `Impossible to download ${libInfo.name}` };
+            size += sizeFile;
             
             const file = {
                 url: url,
