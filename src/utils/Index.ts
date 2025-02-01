@@ -83,8 +83,13 @@ let mirrors = [
 ]
 
 async function getFileFromArchive(jar: string, file: string = null, path: string = null) {
-    let fileReturn: any = []
-    let zip = new admZip(jar);
+    let fileReturn: any = [];
+    let zip;
+    try {
+        zip = new admZip(jar);
+    } catch (error) {
+        throw new Error(`Failed to open the file '${jar}' as ZIP: ${error.message}`);
+    }
     let entries = zip.getEntries();
 
     return await new Promise(resolve => {
@@ -94,7 +99,7 @@ async function getFileFromArchive(jar: string, file: string = null, path: string
                 if (!file) fileReturn.push({ name: entry.entryName, data: entry.getData() });
             }
 
-            if (!entry.isDirectory && entry.entryName.includes(path) && path) {
+            if (!entry.isDirectory && path && entry.entryName.includes(path)) {
                 fileReturn.push(entry.entryName);
             }
         }
@@ -115,21 +120,16 @@ async function createZIP(files: any, ignored: any = null) {
 }
 
 function skipLibrary(lib) {
-    let Lib = { win32: "windows", darwin: "osx", linux: "linux" };
+    const currentOS = { win32: "windows", darwin: "osx", linux: "linux" }[process.platform];
 
-    let skip = false;
-    if (lib.rules) {
-        skip = true;
-        lib.rules.forEach(({ action, os, features }) => {
-            if (features) return true;
-            if (action === 'allow' && ((os && os.name === Lib[process.platform]) || !os)) {
-                skip = false;
-            }
+    if (!lib.rules) return false;
 
-            if (action === 'disallow' && ((os && os.name === Lib[process.platform]) || !os)) {
-                skip = true;
-            }
-        });
+    let skip = true;
+    for (const { action, os, features } of lib.rules) {
+        if (features) continue;
+        const matchesOS = !os || os.name === currentOS;
+        if (action === 'allow' && matchesOS) skip = false;
+        if (action === 'disallow' && matchesOS) skip = true;
     }
     return skip;
 }
