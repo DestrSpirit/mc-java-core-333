@@ -208,18 +208,19 @@ export default class ForgeMC extends EventEmitter {
             const libInfo = getLibInfo(lib, natives);
             const pathLib = path.resolve(this.options.path, 'libraries', libInfo.path);
             const pathLibFile = path.resolve(pathLib, libInfo.name);
+            
+            let { url, sizeFile } = await this.getUrlAndSize(lib, libInfo, natives, downloader);
+            if (!url) return { error: `Impossible to download ${libInfo.name}` };
 
             try {
-                await fs.promises.access(pathLibFile);
-                emitCheck(lib.name);
-                continue;
+                const stats = await fs.promises.stat(pathLibFile);
+                if (stats.size >= sizeFile) {
+                    emitCheck(lib.name);
+                    continue;
+                }
             } catch (error) {
                 
             }
-
-            let { url, sizeFile } = await this.getUrlAndSize(lib, libInfo, natives, downloader);
-
-            if (!url) return { error: `Impossible to download ${libInfo.name}` };
 
             const file = {
                 url: url,
@@ -237,7 +238,8 @@ export default class ForgeMC extends EventEmitter {
                 this.emit("progress", DL, totDL, 'libraries');
             });
             downloader.on("error", (err) => {
-                return { error: err };
+                this.emit("error", err);
+                libraries = { error: err };
             });
 
             await downloader.downloadFileMultiple(files, size, this.options.downloadFileMultiple);
@@ -264,29 +266,31 @@ export default class ForgeMC extends EventEmitter {
     }
 
     async patchForge(profile: any) {
-        if (profile?.processors?.length) {
-            let patcher: any = new forgePatcher(this.options);
-            let config: any = {}
+        let response = {};
+        if (!profile?.processors?.length) return response;
 
-            patcher.on('patch', data => {
-                this.emit('patch', data);
-            });
+        let patcher = new forgePatcher(this.options);
+        let config: any = {};
 
-            patcher.on('error', data => {
-                this.emit('error', data);
-            });
+        patcher.on('patch', data => {
+            this.emit('patch', data);
+        });
 
-            if (!patcher.check(profile)) {
-                config = {
-                    java: this.options.loader.config.javaPath,
-                    minecraft: this.options.loader.config.minecraftJar,
-                    minecraftJson: this.options.loader.config.minecraftJson
-                }
+        patcher.on('error', data => {
+            this.emit('error', data);
+            response = { error: data };
+        });
 
-                await patcher.patcher(profile, config);
-            }
+        if (patcher.check(profile)) return response;
+
+        config = {
+            java: this.options.loader.config.javaPath,
+            minecraft: this.options.loader.config.minecraftJar,
+            minecraftJson: this.options.loader.config.minecraftJson
         }
-        return true
+
+        await patcher.patcher(profile, config);
+        return response;
     }
 
     async createProfile(id: any, pathInstaller: any) {
