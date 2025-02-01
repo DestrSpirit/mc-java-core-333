@@ -234,8 +234,8 @@ export default class ForgeMC extends EventEmitter {
         }
 
         if (files.length > 0) {
-            downloader.on("progress", (DL, totDL) => {
-                this.emit("progress", DL, totDL, 'libraries');
+            downloader.on("progress", (DL, totDL, element) => {
+                this.emit("progress", DL, totDL, 'libraries/' + element);
             });
             downloader.on("error", (err) => {
                 this.emit("error", err);
@@ -247,12 +247,12 @@ export default class ForgeMC extends EventEmitter {
         return libraries;
     }
 
-    async getUrlAndSize(lib: any, libInfo: any, native: string | null, downloader: any) {
+    async getUrlAndSize(lib: any, libInfo: any, native: string | null, downloader: download) {
         if (lib.downloads?.artifact) {
             const artifact = lib.downloads.artifact;
-            const check = await downloader.checkURL(artifact.url).catch(() => false);
-            if (check && check.status === 200 && check.size) {
-                return { url: artifact.url, sizeFile: artifact.size };
+            const check: any = await downloader.checkURL(artifact.url).then(res => res).catch(err => false);
+            if (check && check.status === 200 && check.size && check.size > 0) {
+                return { url: artifact.url, sizeFile: artifact.size || check.size };
             }
         }
 
