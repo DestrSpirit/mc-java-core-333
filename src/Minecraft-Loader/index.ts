@@ -24,36 +24,28 @@ export default class Loader extends EventEmitter {
     }
 
     async install() {
-        let Loader = loader(this.options.loader.type);
+        const Loader = loader(this.options.loader.type);
         if (!Loader) return this.emit('error', { error: `Loader ${this.options.loader.type} not found` });
 
-        if (this.options.loader.type === 'forge') {
-            let forge = await this.forge(Loader);
-            if (forge.error) return this.emit('error', forge);
-            this.emit('json', forge);
-        } else if (this.options.loader.type === 'neoforge') {
-            let neoForge = await this.neoForge(Loader);
-            if (neoForge.error) return this.emit('error', neoForge);
-            this.emit('json', neoForge);
-        } else if (this.options.loader.type === 'fabric') {
-            let fabric = await this.fabric(Loader);
-            if (fabric.error) return this.emit('error', fabric);
-            this.emit('json', fabric);
-        } else if (this.options.loader.type === 'legacyfabric') {
-            let legacyFabric = await this.legacyFabric(Loader);
-            if (legacyFabric.error) return this.emit('error', legacyFabric);
-            this.emit('json', legacyFabric);
-        } else if (this.options.loader.type === 'quilt') {
-            let quilt = await this.quilt(Loader);
-            if (quilt.error) return this.emit('error', quilt);
-            this.emit('json', quilt);
-        } else {
-            return this.emit('error', { error: `Loader ${this.options.loader.type} not found` });
-        }
+        const loaderFunctions: { [key: string]: Function } = {
+            forge: this.forge,
+            neoforge: this.neoForge,
+            fabric: this.fabric,
+            legacyfabric: this.legacyFabric,
+            quilt: this.quilt,
+        };
+
+        const loaderType = this.options.loader.type;
+        const loaderFunction = loaderFunctions[loaderType];
+        if (!loaderFunction) return this.emit('error', { error: `Loader ${loaderType} not found` });
+
+        const result = await loaderFunction.call(this, Loader);
+        if (result.error) return this.emit('error', result);
+        this.emit('json', result);
     }
 
     async forge(Loader: any) {
-        let forge = new Forge(this.options);
+        const forge = new Forge(this.options);
         // set event
         forge.on('check', (progress, size, element) => {
             this.emit('check', progress, size, element);
@@ -72,38 +64,45 @@ export default class Loader extends EventEmitter {
         });
 
         // download installer
-        let installer = await forge.downloadInstaller(Loader);
+        const installer = await forge.downloadInstaller(Loader);
         if (installer.error) return installer;
 
-        if (installer.ext == 'jar') {
-            // extract install profile
-            let profile: any = await forge.extractProfile(installer.filePath);
-            if (profile.error) return profile
-            let destination = path.resolve(this.options.path, 'versions', profile.version.id)
-            if (!fs.existsSync(destination)) fs.mkdirSync(destination, { recursive: true });
-            fs.writeFileSync(path.resolve(destination, `${profile.version.id}.json`), JSON.stringify(profile.version, null, 4));
+        const writeProfileJSON = async (destination: string, filename: string, data: any) => {
+            await fs.promises.mkdir(destination, { recursive: true });
+            await fs.promises.writeFile(
+                path.resolve(destination, `${filename}.json`),
+                JSON.stringify(data, null, 4)
+            );
+        };
 
-            // extract universal jar
-            let universal: any = await forge.extractUniversalJar(profile.install, installer.filePath);
-            if (universal.error) return universal;
-
-            // download libraries
-            let libraries: any = await forge.downloadLibraries(profile, universal);
-            if (libraries.error) return libraries;
-
-            // patch forge if nessary
-            let patch: any = await forge.patchForge(profile.install);
-            if (patch.error) return patch;
-
-            return profile.version;
-        } else {
-            let profile: any = await forge.createProfile(installer.id, installer.filePath);
-            if (profile.error) return profile
-            let destination = path.resolve(this.options.path, 'versions', profile.id)
-            if (!fs.existsSync(destination)) fs.mkdirSync(destination, { recursive: true });
-            fs.writeFileSync(path.resolve(destination, `${profile.id}.json`), JSON.stringify(profile, null, 4));
+        let profile;
+        if (installer.ext !== 'jar') {
+            profile = await forge.createProfile(installer.id, installer.filePath);
+            if (profile.error) return profile;
+            const destination = path.resolve(this.options.path, 'versions', profile.id);
+            await writeProfileJSON(destination, profile.id, profile);
             return profile;
         }
+
+        // extract install profile
+        profile = await forge.extractProfile(installer.filePath);
+        if (profile.error) return profile;
+        const destination = path.resolve(this.options.path, 'versions', profile.version.id);
+        await writeProfileJSON(destination, profile.version.id, profile.version);
+
+        // extract universal jar
+        const universal: any = await forge.extractUniversalJar(profile.install, installer.filePath);
+        if (universal.error) return universal;
+
+        // download libraries
+        const libraries: any = await forge.downloadLibraries(profile, universal);
+        if (libraries.error) return libraries;
+
+        // patch forge if nessary
+        const patch: any = await forge.patchForge(profile.install);
+        if (patch.error) return patch;
+
+        return profile.version;
     }
 
     async neoForge(Loader: any) {
