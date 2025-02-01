@@ -10,9 +10,11 @@ import crypto from 'crypto';
 export default class Microsoft {
     client_id: string;
     type: 'electron' | 'nwjs' | 'terminal';
+    doIncludeXboxAccount: boolean;
 
-    constructor(client_id: string) {
+    constructor(client_id: string, doIncludeXboxAccount: boolean = true) {
         this.client_id = client_id || '00000000402b5328';
+        this.doIncludeXboxAccount = doIncludeXboxAccount;
 
         if (!!process?.versions?.electron) {
             this.type = 'electron';
@@ -57,7 +59,7 @@ export default class Microsoft {
             errorType: "oauth2"
         };
 
-        return await this.getAccount(oauth2)
+        return await this.getAccount(oauth2);
     }
 
     async refresh(acc: any) {
@@ -87,7 +89,7 @@ export default class Microsoft {
         return await this.getAccount(oauth2);
     }
 
-    async getAccount(oauth2: any) {
+    async getAccount(oauth2: any, doIncludeXboxAccount: boolean = this.doIncludeXboxAccount) {
         let xboxLive = await nodeFetch("https://user.auth.xboxlive.com/user/authenticate", {
             method: "post",
             body: JSON.stringify({
@@ -156,7 +158,7 @@ export default class Microsoft {
             errorType: "profile"
         };
 
-        return {
+        let response = {
             access_token: mcLogin.access_token,
             client_token: crypto.randomBytes(16).toString('hex'),
             uuid: profile.id,
@@ -168,11 +170,16 @@ export default class Microsoft {
                 access_token_expires_in: mcLogin.expires_in + Math.floor(Date.now() / 1000),
                 demo: false
             },
+            xboxAccount: null,
             profile: {
                 skins: profile.skins,
                 capes: profile.capes
             }
         }
+        if (doIncludeXboxAccount) {
+            response.xboxAccount = await this.getXboxAccount(xboxLive.Token);
+        }
+        return response;
     }
 
     async getProfile(mcLogin: any) {
@@ -200,6 +207,34 @@ export default class Microsoft {
             skins: profile.skins || [],
             capes: profile.capes || []
         }
+    }
+
+    async getXboxAccount(accessToken: string) {
+        let xboxAccount = await nodeFetch("https://xsts.auth.xboxlive.com/xsts/authorize", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                Properties: {
+                    SandboxId: "RETAIL",
+                    UserTokens: [accessToken]
+                },
+                RelyingParty: "http://xboxlive.com",
+                TokenType: "JWT"
+            })
+        }).then(res => res.json()).catch(err => { return { error: err } });
+        if (xboxAccount.error) {
+            return {
+                ...xboxAccount,
+                errorType: "Get Xbox Account"
+            };
+        }
+        return {
+            xuid: xboxAccount.DisplayClaims.xui[0].xid,
+            gamertag: xboxAccount.DisplayClaims.xui[0].gtg,
+            ageGroup: xboxAccount.DisplayClaims.xui[0].agg,
+        };
     }
 }
 
