@@ -161,86 +161,106 @@ export default class ForgeMC extends EventEmitter {
 
     async downloadLibraries(profile: any, skipForgeFilter: any) {
         let { libraries } = profile.version;
-        let downloader = new download();
+        if (profile.install.libraries) libraries = libraries.concat(profile.install.libraries);
+        
+        libraries = libraries.filter((library, index, self) => index === self.findIndex(t => t.name === library.name));
+
+        const downloader = new download();
         let check = 0;
         let files: any = [];
         let size = 0;
-
-        if (profile.install.libraries) libraries = libraries.concat(profile.install.libraries);
-
-        libraries = libraries.filter((library, index, self) => index === self.findIndex(t => t.name === library.name))
 
         let skipForge = [
             'net.minecraftforge:forge:',
             'net.minecraftforge:minecraftforge:'
         ]
 
-        for (let lib of libraries) {
-            let natives = null;
+        const emitCheck = (libName: string) => {
+            this.emit('check', check++, libraries.length, 'libraries/' + libName);
+        };
 
+        const getLibInfo = (lib: any, natives: string | null): { path: string; name: string } => {
+            if (!lib.downloads?.artifact?.path) return getPathLibraries(lib.name, natives ? `-${natives}` : '');
+
+            const libSplit = lib.downloads.artifact.path.split('/');
+            const libName = libSplit.pop()!;
+            return {
+                path: lib.downloads.artifact.path.replace(`/${libName}`, ''),
+                name: libName,
+            };
+        };
+
+        for (let lib of libraries) {
             if (skipForgeFilter && skipForge.find(libs => lib.name.includes(libs))) {
-                if (lib.downloads?.artifact?.url == "" || !lib.downloads?.artifact?.url) {
-                    this.emit('check', check++, libraries.length, 'libraries');
+                if (!lib.downloads?.artifact?.url) {
+                    emitCheck(lib.name);
                     continue;
                 }
             }
 
             if (skipLibrary(lib)) {
-                this.emit('check', check++, libraries.length, 'libraries');
+                emitCheck(lib.name);
                 continue;
             }
+            
+            const natives = lib.natives ? lib.natives[Lib[process.platform]] : null;
 
-            if (lib.natives) {
-                natives = lib.natives[Lib[process.platform]];
+            const libInfo = getLibInfo(lib, natives);
+            const pathLib = path.resolve(this.options.path, 'libraries', libInfo.path);
+            const pathLibFile = path.resolve(pathLib, libInfo.name);
+
+            try {
+                await fs.promises.access(pathLibFile);
+                emitCheck(lib.name);
+                continue;
+            } catch (error) {
+                
             }
 
-            let file = {}
-            let libInfo = getPathLibraries(lib.name, natives ? `-${natives}` : '');
-            let pathLib = path.resolve(this.options.path, 'libraries', libInfo.path);
-            let pathLibFile = path.resolve(pathLib, libInfo.name);
+            let { url, sizeFile } = await this.getUrlAndSize(lib, libInfo, natives, downloader);
 
-            if (!fs.existsSync(pathLibFile)) {
-                let url
-                let sizeFile = 0;
-                let baseURL = natives ? `${libInfo.path}/` : `${libInfo.path}/${libInfo.name}`;
-                let response: any = await downloader.checkMirror(baseURL, mirrors)
+            if (!url) return { error: `Impossible to download ${libInfo.name}` };
 
-                if (response?.status === 200) {
-                    size += response.size;
-                    sizeFile = response.size;
-                    url = response.url;
-                } else if (lib.downloads?.artifact) {
-                    url = lib.downloads.artifact.url
-                    size += lib.downloads.artifact.size;
-                    sizeFile = lib.downloads.artifact.size;
-                } else {
-                    url = null
-                }
-
-                if (url == null || !url) {
-                    return { error: `Impossible to download ${libInfo.name}` };
-                }
-
-                file = {
-                    url: url,
-                    folder: pathLib,
-                    path: `${pathLib}/${libInfo.name}`,
-                    name: libInfo.name,
-                    size: sizeFile
-                }
-                files.push(file);
-            }
-            this.emit('check', check++, libraries.length, 'libraries');
+            const file = {
+                url: url,
+                folder: pathLib,
+                path: `${pathLib}/${libInfo.name}`,
+                name: libInfo.name,
+                size: sizeFile
+            };
+            files.push(file);
+            emitCheck(lib.name);
         }
 
         if (files.length > 0) {
             downloader.on("progress", (DL, totDL) => {
                 this.emit("progress", DL, totDL, 'libraries');
             });
+            downloader.on("error", (err) => {
+                return { error: err };
+            });
 
             await downloader.downloadFileMultiple(files, size, this.options.downloadFileMultiple);
         }
-        return libraries
+        return libraries;
+    }
+
+    async getUrlAndSize(lib: any, libInfo: any, native: string | null, downloader: any) {
+        if (lib.downloads?.artifact) {
+            const artifact = lib.downloads.artifact;
+            const check = await downloader.checkURL(artifact.url).catch(() => false);
+            if (check && check.status === 200 && check.size) {
+                return { url: artifact.url, sizeFile: artifact.size };
+            }
+        }
+
+        const baseURL = native ? `${libInfo.path}/` : `${libInfo.path}/${libInfo.name}`;
+        const response = await downloader.checkMirror(baseURL, mirrors);
+        if (response) {
+            return { url: response.url, sizeFile: response.size };
+        }
+
+        return { url: null, sizeFile: 0 };
     }
 
     async patchForge(profile: any) {
