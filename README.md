@@ -3,12 +3,35 @@ An autistic fork because I didn't liked the og code.
 (For now, just redoing the Microsoft module, maybe I will redo the whole code later).
 
 ---
-## Avantages :dizzy:
-- I know the existence of switch statement
-- Removed unnecessary logic in some classes
+## Advantages :dizzy:
+> [!NOTE]
+> Most extra parameters use the original minecraft-java-core defaults, so migrating to mc-java-core-333 is seamless and compatible. To get the highest possible optimization offered by this fork check the full list of improvements.
 
 ### Improved classes until now:
-- Authenticator/Microsoft.js
+- [Microsoft](src/Authenticator/Microsoft.ts)
+    1. Implemented switch statement.
+    2. Removed unnecessary logic.
+    3. Added more intuitive errorTypes.
+    4. XboxAccount value is now optional (a whole auth request just for 3 vars (?)).
+        1. **Added doIncludeXboxAccount param (default: true).**
+    - getAuth()
+        1. **Added doRemoveCookies param (default: true).**
+
+### Improved functions until now:
+- [ForgeMC](src/Minecraft-Loader/loader/forge/forge.ts)
+    - downloadLibraries()
+        1. Removed unnecessary logic.
+        2. Added better check event emitter feedback.
+        3. Priority is given to downloading from the official links first, if provided, and then from the mirrors (instead of the other way around).
+- [Loader](src/Minecraft-Loader/index.ts)
+    - install()
+        1. Improved if conditionals with just an object.
+    - forge()
+        1. General improvements.
+- [download](src\utils\Downloader.ts)
+    - checkMirror()
+        1. Minor changes.
+        2. Added check if response.size is an actual number.
 
 ### From here on it is the same as in the original README.md lol
 <br>
@@ -35,7 +58,7 @@ const launch = new Launch();
 async function main() {
     let opt = {
         url: 'https://launcher.luuxis.fr/files/?instance=PokeMoonX',
-        authenticator: await Mojang.login('Luuxis'),
+        authenticator: await Mojang.login('Benjas333'),
         timeout: 10000,
         path: './Minecraft',
         instance: 'PokeMoonX',
