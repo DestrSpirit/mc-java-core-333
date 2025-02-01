@@ -227,7 +227,7 @@ export default class ForgeMC extends EventEmitter {
                 url: url,
                 folder: pathLib,
                 path: `${pathLib}/${libInfo.name}`,
-                name: libInfo.name,
+                type: libInfo.name,
                 size: sizeFile
             };
             files.push(file);
@@ -278,7 +278,7 @@ export default class ForgeMC extends EventEmitter {
         });
 
         patcher.on('error', data => {
-            this.emit('error', data);
+            // this.emit('error', data);
             response = { error: data };
         });
 

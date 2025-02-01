@@ -71,7 +71,7 @@ export default class download extends EventEmitter {
                 let file = files[queued];
                 queued++;
 
-                if (!fs.existsSync(file.foler)) fs.mkdirSync(file.folder, { recursive: true, mode: 0o777 });
+                if (!fs.existsSync(file.folder)) fs.mkdirSync(file.folder, { recursive: true, mode: 0o777 });
                 const writer: any = fs.createWriteStream(file.path, { flags: 'w', mode: 0o777 });
 
                 try {

@@ -57,7 +57,7 @@ export default class forgePatcher extends EventEmitter {
                 });
 
                 ps.on('close', code => {
-                    if (code === 0) resolve();
+                    if (code === 0) return resolve();
                     this.emit('error', `Forge patcher exited with code ${code}`);
                     resolve();
                 });
