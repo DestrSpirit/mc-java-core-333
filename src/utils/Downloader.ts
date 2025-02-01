@@ -130,14 +130,13 @@ export default class download extends EventEmitter {
             let url = `${mirror}/${baseURL}`;
             let res: any = await this.checkURL(url).then(res => res).catch(err => false);
 
-            if (res?.status == 200) {
-                return {
-                    url: url,
-                    size: res.size,
-                    status: res.status
-                }
-                break;
-            } continue;
+            if (res?.status !== 200 || !res.size) continue;
+
+            return {
+                url: url,
+                size: res.size,
+                status: res.status
+            }
         }
         return false;
     }
