@@ -210,8 +210,7 @@ export default class ForgeMC extends EventEmitter {
             const pathLibFile = path.resolve(pathLib, libInfo.name);
             
             let { url, sizeFile } = await this.getUrlAndSize(lib, libInfo, natives, downloader);
-            if (!url) return { error: `Impossible to download ${libInfo.name}` };
-
+            
             try {
                 const stats = await fs.promises.stat(pathLibFile);
                 if (stats.size >= sizeFile) {
@@ -222,6 +221,8 @@ export default class ForgeMC extends EventEmitter {
                 
             }
 
+            if (!url) return { error: `Impossible to download ${libInfo.name}` };
+            
             const file = {
                 url: url,
                 folder: pathLib,

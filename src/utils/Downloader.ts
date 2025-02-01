@@ -120,7 +120,7 @@ export default class download extends EventEmitter {
                         status: res.status
                     })
                 }
-            })
+            }).catch(err => false);
             reject(false);
         });
     }
