@@ -134,6 +134,10 @@ export default class Libraries {
 		const libraries: LibraryDownload[] = [];
 
 		for (const lib of this.json.libraries) {
+			if (lib.name === 'org.ow2.asm:asm:9.6') {
+                		console.log("Ignore this shit :", lib.name);
+                		continue;
+            		}
 			let artifact: { sha1: string; size: number; path: string; url: string } | undefined;
 			let type = 'Libraries';
 
