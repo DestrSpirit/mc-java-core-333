@@ -360,14 +360,11 @@ export default class Microsoft {
 		}).then(res => res.json()).catch(err => { return { error: err } });;
 		if (profile.error) return profile;
 
-		const skins = profile.skins || [];
-		const capes = profile.capes || [];
-
-		for (const skin of skins) {
-			if (skins.url) skin.base64 = `data:image/png;base64,${await getBase64(skin.url)}`
+		for (const skin of profile.skins || []) {
+			if (skin.url) skin.base64 = `data:image/png;base64,${await getBase64(skin.url)}`
 		}
-		for (const cape of capes) {
-			if (skins.url) cape.base64 = `data:image/png;base64,${await getBase64(cape.url)}`
+		for (const cape of profile.capes || []) {
+			if (cape.url) cape.base64 = `data:image/png;base64,${await getBase64(cape.url)}`
 		}
 
 		return {
