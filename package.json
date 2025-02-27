@@ -29,8 +29,8 @@
         "Forge",
         "Minecraft-Forge"
     ],
-    "author": "Benjas333",
-    "license": "SEE LICENSE IN LICENSE.md",
+    "author": "Luuxis & Benjas333",
+    "license": "CCANC",
     "dependencies": {
         "7zip-bin": "^5.2.0",
         "adm-zip": "^0.5.16",
