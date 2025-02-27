@@ -121,10 +121,11 @@ export default class Microsoft {
                 RelyingParty: "rp://api.minecraftservices.com/",
                 TokenType: "JWT"
             })
-        }).then(res => res.json());
-        if (xsts.error) return {
+        }).then(res => res.json()).catch(err => { return { error: err } });
+        if (xsts.error || xsts.XErr) return {
             ...xsts,
-            errorType: "xsts - Minecraft API"
+            errorType: "xsts - Minecraft API",
+            errorMessage: xsts.XErr ? await knownTokenErrors(xsts.XErr) : 'No XErr code provided.'
         };
 
         let mcLogin = await nodeFetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
@@ -242,4 +243,49 @@ async function getBass64(url: string) {
     let response = await nodeFetch(url);
     let buffer = await response.buffer();
     return buffer.toString('base64');
+}
+
+async function knownTokenErrors(errorCode: Number) {
+    switch (errorCode) {
+        case 2148916227:
+            return 'ENFORCEMENT_BAN';
+        case 2148916229:
+            return 'ACCOUNT_PARENTALLY_RESTRICTED';
+        case 2148916233:
+            return 'The user does not currently have an Xbox profile - https://signup.live.com/signup - ACCOUNT_CREATION_REQUIRED';
+        case 2148916234:
+            return 'ACCOUNT_TERMS_OF_USE_NOT_ACCEPTED';
+        case 2148916235:
+            return 'ACCOUNT_COUNTRY_NOT_AUTHORIZED';
+        case 2148916236:
+            return 'ACCOUNT_AGE_VERIFICATION_REQUIRED';
+        case 2148916237:
+            return 'ACCOUNT_UNDER_CURFEW';
+        case 2148916238:
+            return 'The account date of birth is under 18 years and cannot proceed unless the account is added to a Family by an adult - ACCOUNT_CHILD_NOT_IN_FAMILY'; // User is under 18
+        case 2148916239:
+            return 'ACCOUNT_CSV_TRANSITION_REQUIRED';
+        case 2148916240:
+            return 'ACCOUNT_MAINTENANCE_REQUIRED';
+        case 2148916243:
+            return 'ACCOUNT_NAME_CHANGE_REQUIRED';
+        case 2148916242:
+            return 'CONTENT_ISOLATION (Verify SCID / Sandbox)';
+        case 2148916255:
+            return 'EXPIRED_SERVICE_TOKEN';
+        case 2148916258:
+            return 'EXPIRED_USER_TOKEN';
+        case 2148916257:
+            return 'EXPIRED_TITLE_TOKEN';
+        case 2148916256:
+            return 'EXPIRED_DEVICE_TOKEN';
+        case 2148916259:
+            return 'INVALID_DEVICE_TOKEN';
+        case 2148916260:
+            return 'INVALID_TITLE_TOKEN';
+        case 2148916261:
+            return 'INVALID_USER_TOKEN';
+        default:
+            return `Unknown error code (${errorCode})`;
+    }
 }

@@ -14,6 +14,7 @@ An autistic fork because I didn't liked the og code.
     3. Added more intuitive errorTypes.
     4. XboxAccount value is now optional (a whole auth request just for 3 vars (?)).
         1. **Added doIncludeXboxAccount param (default: true).**
+    5. xsts login now includes better error messages in case of XErr code.
     - getAuth()
         1. **Added doRemoveCookies param (default: true).**
 
